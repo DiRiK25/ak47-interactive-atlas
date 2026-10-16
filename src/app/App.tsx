@@ -70,7 +70,7 @@ export default function App() {
       <h1>АК<span className="title-dash">—</span>47<span className="title-dot">.</span></h1>
       <p className="intro-subtitle">ИНТЕРАКТИВНЫЙ АТЛАС</p>
       <p className="intro-description">Знакомый силуэт.<br />Новый взгляд на каждую деталь.</p>
-      <div className="specimen-tag"><span>ТИП 3</span><i />1950-е годы</div>
+      <div className="specimen-tag"><span>РАННИЙ АК</span><i />XX век</div>
     </section>
 
     <div className="collection-note interface"><span className="tiny-label">ФОРМА. МАТЕРИАЛ. ИСТОРИЯ.</span><p>Предмет, ставший<br />частью истории.</p><span className="edition-label">Цифровая реконструкция / 01</span></div>
@@ -131,8 +131,8 @@ export default function App() {
     </Modal>}
     {panel === 'about' && <Modal title="История через форму" eyebrow="АК-47 / ИНТЕРАКТИВНЫЙ АТЛАС" onClose={closePanel}>
       <p className="about-lead">Цифровая экспозиция, в которой можно рассмотреть знакомый предмет заново.</p>
-      <p>За основу выбран внешний образ АК Type 3 с постоянным деревянным прикладом, характерный для 1950-х годов. Оригинальная модель, материалы дерева и металла созданы программно.</p>
-      <div className="about-facts"><div><span>Визуальный вариант</span><strong>АК Type 3</strong></div><div><span>Происхождение</span><strong>СССР</strong></div><div><span>Тип представления</span><strong>Художественная реконструкция</strong></div></div>
+      <p>Внешний образ реконструирован по двум боковым фотографиям раннего АК, предоставленным владельцем. Геометрия и материалы созданы программно. Невидимые поверхности и фактура содержат художественные допущения.</p>
+      <div className="about-facts"><div><span>Визуальный вариант</span><strong>Образец на фотоснимке</strong></div><div><span>Происхождение</span><strong>СССР</strong></div><div><span>Тип представления</span><strong>Художественная реконструкция</strong></div></div>
       <p>Это образовательная художественная интерпретация, а не цифровая копия конкретного музейного предмета. Пропорции, мелкие наружные детали и отделка содержат допущения. Внутренний обзор условный; разнесённая композиция не отражает порядок разборки.</p>
       <p className="fine-print">Во время разработки музейные сайты и Wikimedia оказались недоступны из облачной среды (HTTP 403). Проверенные по изображениям музейные атрибуции не заявляются. Попытки доступа и границы достоверности зафиксированы в документации проекта.</p>
       <a className="text-button" href="https://github.com/DiRiK25/ak47-interactive-atlas" target="_blank" rel="noreferrer">Репозиторий и документация <ArrowRight size={16} /></a>

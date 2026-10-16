@@ -60,7 +60,7 @@ export class AtlasScene {
     this.renderer.outputColorSpace = T.SRGBColorSpace
     this.renderer.toneMapping = T.ACESFilmicToneMapping
     this.renderer.toneMappingExposure = 1.05
-    this.renderer.domElement.setAttribute('aria-label', 'Интерактивная трёхмерная модель АК Type 3. Вращайте перетаскиванием; для выбора деталей также доступен список.')
+    this.renderer.domElement.setAttribute('aria-label', 'Интерактивная трёхмерная модель раннего АК по фотоснимку. Вращайте перетаскиванием; для выбора деталей также доступен список.')
     this.renderer.domElement.setAttribute('role', 'img')
     this.renderer.domElement.setAttribute('data-testid', 'atlas-canvas')
     container.append(this.renderer.domElement)
@@ -138,7 +138,7 @@ export class AtlasScene {
     if (this.state.mode === 'focus' && this.state.selected) this.focus(this.state.selected)
   }
   resetCamera(immediate = false) {
-    const width = this.state.mode === 'exhibit' ? 15 : this.width < 700 ? 10.8 : 11.8
+    const width = this.state.mode === 'exhibit' ? 15 : this.width < 700 ? 11.4 : 11.8
     const height = this.state.mode === 'exhibit' ? 9 : 5.5
     this.baseDistance = fitDistance(width, height, this.camera.aspect, this.camera.fov)
     this.controls.minDistance = this.state.mode === 'focus' ? 2.7 : this.baseDistance * .56

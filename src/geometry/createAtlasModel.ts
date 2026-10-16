@@ -29,156 +29,148 @@ export function createAtlasModel(m: AtlasMaterials): AtlasModel {
     add(slot, m.dark, [x, y, z + Math.sign(z) * 0.011])
   }
 
-  makePart('stock', [-4, -.38, 0], [-1.4, .3, .2])
-  // Broad side faces and a shaped comb; all coordinates are artistic display units.
-  const stock = new T.Shape(); stock.moveTo(-5.3, -.03); stock.lineTo(-4.91, .015)
-  stock.bezierCurveTo(-4.32, .06, -3.72, .17, -3.4, .15)
-  stock.lineTo(-3.16, .075); stock.quadraticCurveTo(-2.94, .015, -2.61, .015)
-  stock.lineTo(-2.57, -.35); stock.quadraticCurveTo(-2.99, -.38, -3.43, -.57)
-  stock.lineTo(-5.15, -1.15); stock.quadraticCurveTo(-5.27, -1.18, -5.29, -1.03)
-  stock.lineTo(-5.36, -.15); stock.quadraticCurveTo(-5.37, -.06, -5.3, -.03)
-  const stockGeometry = extrude(stock, .44, .065)
+  // These are display-space silhouettes interpreted from the supplied side views.
+  // They have no real-world scale, functional internals or manufacturing surfaces.
+  const rivet = (x: number, y: number, z: number, radius = .032) => {
+    const head = add(new T.SphereGeometry(radius, 16, 10), m.edge, [x, y, z])
+    head.scale.z = .3
+  }
+
+  makePart('stock', [-4.15, -.55, 0], [-1.4, .3, .2])
+  const stock = new T.Shape(); stock.moveTo(-5.45, -.17)
+  stock.bezierCurveTo(-4.63, -.08, -3.61, .025, -2.79, .12)
+  stock.lineTo(-2.77, -.37); stock.bezierCurveTo(-3.51, -.65, -4.57, -1.07, -5.35, -1.34)
+  stock.quadraticCurveTo(-5.43, -1.37, -5.45, -1.28)
+  stock.lineTo(-5.49, -.25); stock.quadraticCurveTo(-5.49, -.18, -5.45, -.17)
+  const stockGeometry = extrude(stock, .44, .045)
   const stockPosition = stockGeometry.getAttribute('position'), stockNormal = stockGeometry.getAttribute('normal')
   const n = new T.Vector3()
   for (let i = 0; i < stockPosition.count; i++) {
-    const x = stockPosition.getX(i), z = stockPosition.getZ(i), slope = -.25 / 2.9
-    const width = 1 + (x + 5.4) * slope
+    const x = stockPosition.getX(i), z = stockPosition.getZ(i), slope = -.25 / 2.75
+    const width = 1 + (x + 5.5) * slope
     stockPosition.setZ(i, z * width)
-    // Transform normals with the inverse transpose of the thickness taper.
     n.fromBufferAttribute(stockNormal, i)
     n.set(n.x - n.z * z * slope / width, n.y, n.z / width).normalize()
     stockNormal.setXYZ(i, n.x, n.y, n.z)
   }
   add(woodUV(stockGeometry), m.wood)
-  add(profile([[-5.405, -.07], [-5.35, -.08], [-5.26, -1.15], [-5.32, -1.14]], .5, .026), m.dark)
-  add(profile([[-2.79, .07], [-2.46, .07], [-2.46, -.35], [-2.76, -.37]], .45, .018))
-  screw(-4.83, -.87, -.294, .032)
-  const sling = add(new T.TorusGeometry(.108, .021, 8, 28), m.metal, [-4.65, -.8, -.31]); sling.scale.y = .63
+  add(profile([[-5.52, -.19], [-5.48, -.19], [-5.43, -1.33], [-5.48, -1.32]], .48, .015), m.dark)
+  add(profile([[-2.805, .13], [-2.755, .13], [-2.755, -.39], [-2.805, -.39]], .41, .008))
+  const sling = add(new T.TorusGeometry(.075, .016, 8, 24), m.metal, [-4.45, -1.025, 0])
+  sling.rotation.x = Math.PI / 2; sling.scale.y = .65
 
-  makePart('receiver', [-1.38, -.05, 0], [0, .1, 0])
-  const receiverShape = new T.Shape()
-  const outline: [number, number][] = [[-2.6, .22], [-.1, .22], [.15, .12], [.15, -.52], [-.36, -.58], [-1.58, -.52], [-2.6, -.5]]
-  outline.forEach(([x, y], i) => i ? receiverShape.lineTo(x, y) : receiverShape.moveTo(x, y)); receiverShape.closePath()
-  add(profile(outline, .55, .025))
-  const recess = new T.Path()
-  recess.moveTo(-2.32, .035); recess.lineTo(-.72, .035); recess.lineTo(-.56, -.19); recess.lineTo(-.73, -.32); recess.lineTo(-2.32, -.32); recess.closePath()
-  receiverShape.holes.push(recess)
+  makePart('receiver', [-1.26, -.06, 0], [0, .1, 0])
+  add(profile([[-2.79, .15], [-2.55, .25], [.28, .25], [.3, -.26], [-.35, -.32], [-2.76, -.39]], .49, .018))
   for (const side of [-1, 1]) {
-    // Bevelled side shell with an actual recessed outer panel, backed by a solid decorative core.
-    add(extrude(receiverShape, .045, .012), m.metal, [0, 0, side * .315])
-    add(profile([[-2.32, .035], [-.72, .035], [-.56, -.19], [-.73, -.32], [-2.32, -.32]], .003, 0), m.dark, [0, 0, side * .303])
-    for (const [x, y] of [[-2.48, -.3], [-1.5, -.4], [-.25, -.23]]) screw(x, y, side * .365, .033)
+    add(tube([[-2.65, .1, side * .266], [-1.85, .1, side * .266], [-.75, .12, side * .266], [.22, .14, side * .266]], .008, 36), m.edge)
+    for (const [x, y] of [[-2.3, -.26], [-1.83, -.28], [-1.37, -.18], [-1.12, -.24], [-.95, -.03], [-.76, -.14]]) rivet(x, y, side * .269)
+    add(tube([[-2.71, -.31, side * .266], [-1.6, -.31, side * .266], [-.35, -.29, side * .266]], .006, 28), m.edge)
   }
-  // Outer selector silhouette; decorative, with no mechanism or motion.
-  add(profile([[-1.91, -.16], [-.48, -.055], [-.26, -.15], [-.47, -.25], [-1.9, -.23]], .025, .015), m.metal, [0, 0, .397])
-  screw(-1.94, -.18, .425, .07)
-  add(profile([[-.5, -.06], [-.23, -.05], [-.17, -.12], [-.47, -.17]], .035, .015), m.edge, [0, 0, .44])
-  add(tube([[-1.73, -.52, 0], [-1.64, -.89, 0], [-1.31, -1.0, 0], [-.76, -.95, 0], [-.57, -.56, 0]], .045), m.metal)
-  add(tube([[-1.2, -.52, 0], [-1.13, -.72, 0], [-1.28, -.84, 0]], .045), m.dark)
-  add(profile([[-.6, -.53], [-.35, -.53], [-.39, -.74], [-.55, -.78]], .24, .02))
+  // Static external silhouettes only; no control is operable.
+  add(profile([[-2.1, -.055], [-1.88, -.02], [-.12, .235], [-.035, .18], [-.15, .07], [-1.98, -.16]], .018, .009), m.metal, [0, 0, .288])
+  rivet(-2.08, -.055, .313, .067)
+  add(profile([[-.16, .205], [-.025, .23], [.015, .14], [-.15, .11]], .026, .008), m.edge, [0, 0, .305])
+  const guard = new T.Shape(); guard.moveTo(-2.0, -.36); guard.lineTo(-1.18, -.33)
+  guard.lineTo(-1.2, -.63); guard.quadraticCurveTo(-1.22, -.74, -1.4, -.75)
+  guard.lineTo(-1.82, -.75); guard.quadraticCurveTo(-2.0, -.72, -2.02, -.58); guard.closePath()
+  const guardOpening = new T.Path(); guardOpening.moveTo(-1.955, -.4); guardOpening.lineTo(-1.225, -.375)
+  guardOpening.lineTo(-1.245, -.61); guardOpening.quadraticCurveTo(-1.25, -.7, -1.4, -.705)
+  guardOpening.lineTo(-1.8, -.705); guardOpening.quadraticCurveTo(-1.96, -.685, -1.97, -.565); guardOpening.closePath()
+  guard.holes.push(guardOpening); add(extrude(guard, .13, .008), m.metal)
+  add(tube([[-1.72, -.36, 0], [-1.76, -.52, 0], [-1.65, -.625, 0]], .026, 24), m.dark)
+  add(profile([[-1.19, -.34], [-1.07, -.34], [-1.09, -.55], [-1.17, -.56]], .18, .012))
 
-  makePart('cover', [-1.4, .52, 0], [-.1, 1.65, -.1])
-  const arch = new T.Shape(); arch.moveTo(-.315, .22); arch.lineTo(-.325, .34)
-  arch.quadraticCurveTo(-.32, .51, -.16, .55)
-  arch.quadraticCurveTo(0, .59, .16, .55)
-  arch.quadraticCurveTo(.32, .51, .325, .34); arch.lineTo(.315, .22); arch.closePath()
-  const cover = extrude(arch, 2.37, .025); cover.rotateY(Math.PI / 2); cover.translate(-1.35, 0, 0)
-  add(cover, m.metal)
-  for (const z of [-.339, .339]) add(tube([[-2.53, .22, z], [-1.4, .22, z], [-.17, .22, z]], .012), m.edge)
-  add(profile([[-2.62, .34], [-2.47, .34], [-2.47, .46], [-2.62, .46]], .16, .015), m.edge)
-  // Dark external opening and a short visible handle, no internal geometry.
-  add(profile([[-.98, .24], [-.15, .24], [-.15, .37], [-.98, .37]], .008, .012), m.dark, [0, 0, .353])
-  const handle = add(cylinderX(.057, .32), m.metal, [-.24, .28, .46]); handle.rotation.y = Math.PI / 2
-  add(new T.SphereGeometry(.082, 20, 12), m.edge, [-.24, .28, .64]).scale.set(1.3, .8, 1)
+  makePart('cover', [-1.4, .41, 0], [-.1, 1.65, -.1])
+  add(loft([
+    { x: -2.78, y: .155, h: .025, w: .225 }, { x: -2.57, y: .29, h: .13, w: .265 },
+    { x: -2.43, y: .315, h: .165, w: .28 }, { x: -.18, y: .315, h: .165, w: .28 },
+    { x: .04, y: .3, h: .14, w: .25 },
+  ], 48, 6, .55), m.metal)
+  for (const z of [-.278, .278]) add(tube([[-2.72, .165, z], [-2.4, .19, z], [-.15, .19, z]], .009, 36), m.edge)
+  add(profile([[-.69, .19], [.025, .19], [.025, .305], [-.69, .305]], .005, .01), m.dark, [0, 0, .287])
+  const handle = add(cylinderX(.038, .19), m.metal, [.015, .24, .355]); handle.rotation.y = Math.PI / 2
+  add(new T.SphereGeometry(.051, 18, 10), m.edge, [.015, .24, .455]).scale.set(1.45, .7, 1)
 
-  makePart('handguard', [.95, -.14, 0], [1.05, -.95, .2])
-  const fore = new T.Shape(); fore.moveTo(.055, .085); fore.lineTo(.34, .11); fore.lineTo(1.7, .1)
-  fore.lineTo(1.72, -.19); fore.quadraticCurveTo(1.69, -.28, 1.52, -.29)
-  fore.lineTo(.47, -.4); fore.quadraticCurveTo(.23, -.51, .11, -.36); fore.closePath()
-  add(woodUV(extrude(fore, .43, .045)), m.redWood)
-  // Shallow sculpted side recess, backed by wood. It is an exterior visual detail.
-  const groove = new T.Path(); groove.moveTo(.37, -.095)
-  groove.bezierCurveTo(.65, -.06, 1.08, -.035, 1.43, -.028)
-  groove.quadraticCurveTo(1.5, -.03, 1.43, -.09)
-  groove.bezierCurveTo(1.06, -.115, .66, -.16, .37, -.165)
-  groove.quadraticCurveTo(.29, -.13, .37, -.095); groove.closePath()
-  fore.holes.push(groove)
+  makePart('handguard', [1.2, -.08, 0], [1.05, -.95, .2])
+  const fore = new T.Shape(); fore.moveTo(.315, .185); fore.lineTo(.85, .19); fore.lineTo(2.13, .17)
+  fore.quadraticCurveTo(2.18, .055, 2.145, -.14)
+  fore.bezierCurveTo(1.83, -.17, 1.22, -.155, .91, -.225)
+  fore.quadraticCurveTo(.73, -.27, .58, -.375)
+  fore.quadraticCurveTo(.45, -.4, .315, -.285); fore.closePath()
+  add(woodUV(extrude(fore, .45, .035), 1.1), m.redWood)
+  add(profile([[.29, .2], [.34, .2], [.34, -.3], [.29, -.28]], .5, .01))
+  add(loft([{ x: 2.13, y: .015, h: .2, w: .265 }, { x: 2.21, y: .015, h: .2, w: .265 }], 32, 2, .4), m.metal)
+  add(new T.TorusGeometry(.075, .018, 8, 24), m.metal, [2.17, -.09, -.28]).scale.y = .6
+
+  makePart('gas', [1.58, .4, 0], [1.1, 1.15, -.15])
+  cyl(1.51, .35, .115, 2.57)
+  const upper = new T.Shape(); upper.moveTo(.88, .205); upper.lineTo(.88, .515)
+  upper.quadraticCurveTo(1.3, .545, 2.125, .515); upper.lineTo(2.135, .205)
+  upper.lineTo(1.97, .205); upper.lineTo(1.97, .255); upper.quadraticCurveTo(1.85, .285, 1.72, .255)
+  upper.lineTo(1.72, .205); upper.lineTo(1.31, .205); upper.lineTo(1.31, .255)
+  upper.quadraticCurveTo(1.18, .285, 1.05, .255); upper.lineTo(1.05, .205); upper.closePath()
+  add(woodUV(extrude(upper, .365, .022), .95), m.wood)
+  cyl(.855, .35, .19, .07); cyl(2.16, .35, .18, .07)
+  cyl(2.65, .35, .108, 1.02)
+  for (const x of [2.29, 2.43, 2.57]) cyl(x, .35, .116, .045, m.edge)
+  add(profile([[3.11, .455], [3.19, .425], [3.43, .12], [3.5, .075], [3.48, -.025], [3.14, -.025], [3.12, .13]], .24, .014))
+  for (const z of [-.14, .14]) rivet(3.16, .09, z, .025)
+
+  makePart('barrel', [3.46, .045, 0], [1.7, .0, -.2])
+  cyl(2.53, .045, .09, 4.27, m.metal, 0, .075)
+  cyl(.4, .045, .14, .15); cyl(3.19, .045, .12, .16); cyl(4.4, .045, .105, .2)
+  cyl(4.64, .045, .09, .17); cyl(4.76, .045, .104, .12)
+  const muzzle = new T.RingGeometry(.045, .101, 36); muzzle.rotateY(Math.PI / 2)
+  add(muzzle, m.edge, [4.823, .045, 0])
+  const darkCap = new T.CircleGeometry(.044, 28); darkCap.rotateY(Math.PI / 2)
+  add(darkCap, m.dark, [4.824, .045, 0])
+  cyl(3.33, -.13, .019, 2.82, m.edge); cyl(4.61, -.13, .029, .12)
+  add(profile([[4.27, .015], [4.49, .015], [4.49, -.15], [4.31, -.15]], .11, .01))
+
+  makePart('magazine', [-.35, -1.35, 0], [.2, -1.7, .3])
+  const mag = new T.Shape(); mag.moveTo(-1.085, -.315); mag.lineTo(-.385, -.31)
+  mag.bezierCurveTo(-.32, -.93, .06, -1.39, .7, -1.73)
+  mag.lineTo(.3, -2.32); mag.bezierCurveTo(-.53, -1.89, -1.005, -1.14, -1.085, -.315); mag.closePath()
+  add(extrude(mag, .345, .028), m.magazine)
+  const panel = new T.Shape(); panel.moveTo(-.975, -.46); panel.lineTo(-.48, -.45)
+  panel.bezierCurveTo(-.39, -1.02, -.035, -1.45, .57, -1.78)
+  panel.lineTo(.275, -2.16); panel.bezierCurveTo(-.44, -1.75, -.9, -1.09, -.975, -.46); panel.closePath()
   for (const side of [-1, 1]) {
-    const shell = extrude(fore, .025, .01); shell.translate(0, 0, side * .266)
-    add(woodUV(shell), m.redWood)
-    const inset = extrude(new T.Shape(groove.getPoints(32)), .001, 0); inset.translate(0, 0, side * .261)
-    add(woodUV(inset), m.gripWood)
+    add(extrude(panel, .008, .012), m.magazine, [0, 0, side * .196])
+    add(tube([[-1.025, -.42, side * .204], [-.87, -1.12, side * .204], [-.42, -1.79, side * .204], [.3, -2.265, side * .204]], .011, 42), m.edge)
+    add(tube([[-.425, -.41, side * .204], [-.235, -1.04, side * .204], [.19, -1.51, side * .204], [.655, -1.765, side * .204]], .011, 42), m.edge)
+    add(profile([[-1.03, -.35], [-.43, -.35], [-.417, -.43], [-1.02, -.43]], .008, .006), m.metal, [0, 0, side * .205])
   }
-  add(loft([{ x: .015, y: -.12, h: .255, w: .29 }, { x: .09, y: -.12, h: .255, w: .29 }]), m.metal)
-  add(loft([{ x: 1.68, y: -.08, h: .215, w: .285 }, { x: 1.77, y: -.08, h: .215, w: .285 }]), m.metal)
-  add(new T.TorusGeometry(.11, .022, 8, 24), m.metal, [1.73, -.12, -.32]).scale.y = .65
+  add(profile([[.265, -2.30], [.695, -1.71], [.75, -1.75], [.31, -2.365]], .39, .012), m.metal)
 
-  makePart('gas', [.95, .48, 0], [1.1, 1.15, -.15])
-  cyl(.86, .4, .14, 1.95)
-  const upper = new T.Shape(); upper.moveTo(-.2, .29); upper.lineTo(-.215, .44)
-  upper.quadraticCurveTo(-.205, .57, 0, .585)
-  upper.quadraticCurveTo(.205, .57, .215, .44); upper.lineTo(.2, .29); upper.closePath()
-  const upperGeometry = extrude(upper, 1.04, .04)
-  upperGeometry.rotateY(Math.PI / 2); upperGeometry.translate(.87, 0, 0)
-  add(woodUV(upperGeometry, .9), m.wood)
-  cyl(.26, .42, .195, .13); cyl(1.46, .42, .17, .13)
-  cyl(1.78, .4, .135, .52)
-  add(profile([[1.92, .55], [2.07, .49], [2.32, .03], [1.99, -.08], [1.9, .2]], .29, .025))
-  for (const z of [-.15, .15]) screw(2.07, .27, z, .034)
-
-  makePart('barrel', [3.16, .04, 0], [1.7, .0, -.2])
-  cyl(2.3, .025, .125, 4.34, m.metal, 0, .095)
-  cyl(.12, .025, .185, .28)
-  cyl(2.19, .025, .19, .31)
-  cyl(3.74, .025, .145, .23)
-  cyl(4.4, .025, .13, .28)
-  cyl(4.58, .025, .145, .12, m.edge)
-  const muzzle = new T.RingGeometry(.065, .14, 40); muzzle.rotateY(Math.PI / 2)
-  add(muzzle, m.metal, [4.648, .025, 0])
-  const darkCap = new T.CircleGeometry(.063, 32); darkCap.rotateY(Math.PI / 2)
-  add(darkCap, m.dark, [4.649, .025, 0])
-  cyl(2.45, -.255, .028, 3.25, m.edge)
-  cyl(4.02, -.255, .047, .18, m.metal)
-  add(profile([[3.65, -.04], [3.87, -.04], [3.87, -.28], [3.69, -.28]], .14, .015))
-
-  makePart('magazine', [.48, -1.75, 0], [.2, -1.7, .3])
-  const mag = new T.Shape(); mag.moveTo(-.57, -.49); mag.lineTo(.43, -.49)
-  mag.bezierCurveTo(.48, -1.13, .73, -1.96, 1.42, -2.61)
-  mag.lineTo(.64, -3.01); mag.bezierCurveTo(-.1, -2.32, -.48, -1.43, -.57, -.49); mag.closePath()
-  add(extrude(mag, .45, .045), m.magazine)
-  const rim = new T.Shape(); rim.moveTo(.58, -2.98); rim.lineTo(1.43, -2.55); rim.lineTo(1.51, -2.65); rim.lineTo(.65, -3.09); rim.closePath()
-  add(extrude(rim, .48, .018), m.magazine)
+  makePart('grip', [-2.46, -.93, 0], [-.95, -1.3, .2])
+  const grip = new T.Shape(); grip.moveTo(-2.52, -.365); grip.lineTo(-1.985, -.375)
+  grip.bezierCurveTo(-2.08, -.65, -2.34, -.97, -2.39, -1.255)
+  grip.quadraticCurveTo(-2.41, -1.395, -2.49, -1.42); grip.lineTo(-2.73, -1.405)
+  grip.quadraticCurveTo(-2.91, -1.4, -2.96, -1.22)
+  grip.bezierCurveTo(-2.86, -.95, -2.66, -.65, -2.52, -.365); grip.closePath()
+  add(woodUV(extrude(grip, .32, .045), 1, true), m.gripWood)
   for (const side of [-1, 1]) {
-    for (let j = 0; j < 3; j++) {
-      const offset = j * .24
-      add(tube([[-.37 + offset, -.77, side * .25], [-.28 + offset, -1.32, side * .25], [-.02 + offset, -1.96, side * .25], [.47 + offset, -2.64 + offset * .36, side * .25]], .029, 42), m.magazine)
-    }
-    add(tube([[-.49, -.61, side * .253], [-.36, -1.53, side * .253], [.02, -2.29, side * .253], [.65, -2.95, side * .253]], .018, 42), m.edge)
-    add(tube([[.36, -.61, side * .253], [.54, -1.45, side * .253], [.87, -2.14, side * .253], [1.33, -2.59, side * .253]], .018, 42), m.edge)
-    add(profile([[-.47, -.62], [.35, -.62], [.37, -.74], [-.45, -.74]], .015, .012), m.metal, [0, 0, side * .255])
+    const inset = extrude(grip, .004, .008); inset.scale(.81, .82, 1); inset.translate(-2.47 * .19, -.9 * .18, side * .207)
+    add(woodUV(inset, 1, true), m.gripWood)
+    screw(-2.48, -.87, side * .222, .035)
   }
 
-  makePart('grip', [-2.12, -1.18, 0], [-.95, -1.3, .2])
-  const grip = new T.Shape(); grip.moveTo(-2.04, -.48); grip.lineTo(-1.51, -.53)
-  grip.bezierCurveTo(-1.56, -.75, -1.92, -1.18, -2.03, -1.67)
-  grip.quadraticCurveTo(-2.03, -1.83, -2.19, -1.84); grip.lineTo(-2.52, -1.77)
-  grip.quadraticCurveTo(-2.68, -1.72, -2.59, -1.53)
-  grip.bezierCurveTo(-2.32, -1.08, -2.15, -.68, -2.04, -.48); grip.closePath()
-  add(woodUV(extrude(grip, .38, .06), 1, true), m.gripWood)
-  for (const z of [-.257, .257]) screw(-2.04, -1.08, z, .05)
-
-  makePart('sights', [2.14, .64, 0], [.15, 1.7, .65])
-  add(profile([[-.15, .34], [.33, .34], [.29, .61], [-.13, .66]], .4, .03))
-  add(profile([[-.41, .63], [.2, .57], [.19, .67], [-.41, .74]], .24, .015), m.edge)
-  add(profile([[-.43, .65], [-.35, .65], [-.35, .8], [-.43, .8]], .31, .012), m.metal)
-  const sightBase = new T.Shape(); sightBase.moveTo(3.59, .02); sightBase.lineTo(3.94, .02)
-  sightBase.lineTo(3.84, .58); sightBase.lineTo(3.7, .58); sightBase.closePath()
-  const sightWindow = new T.Path(); sightWindow.moveTo(3.695, .17); sightWindow.lineTo(3.84, .17)
-  sightWindow.lineTo(3.8, .39); sightWindow.quadraticCurveTo(3.77, .45, 3.74, .39); sightWindow.closePath()
-  sightBase.holes.push(sightWindow); add(extrude(sightBase, .2, .017))
-  const front = add(new T.TorusGeometry(.17, .042, 10, 36, Math.PI * 1.65), m.metal, [3.77, .57, 0]); front.rotation.y = Math.PI / 2; front.rotation.z = -Math.PI * .325
-  add(new T.CylinderGeometry(.022, .03, .24, 12), m.edge, [3.77, .53, 0])
-  for (const z of [-.12, .12]) screw(3.77, .1, z, .032)
+  makePart('sights', [2.48, .59, 0], [.15, 1.7, .65])
+  add(profile([[.3, .2], [.855, .2], [.855, .51], [.76, .58], [.33, .58]], .34, .018))
+  add(profile([[.34, .54], [.81, .54], [.79, .615], [.35, .63]], .2, .008), m.edge)
+  add(profile([[.31, .57], [.37, .57], [.37, .66], [.31, .66]], .29, .008))
+  for (const z of [-.184, .184]) rivet(.48, .48, z, .024)
+  const sightBase = new T.Shape(); sightBase.moveTo(4.17, .06); sightBase.lineTo(4.6, .06)
+  sightBase.lineTo(4.51, .2); sightBase.lineTo(4.49, .62)
+  sightBase.quadraticCurveTo(4.44, .685, 4.345, .635); sightBase.lineTo(4.235, .2); sightBase.closePath()
+  const lowerWindow = new T.Path(); lowerWindow.moveTo(4.28, .23); lowerWindow.lineTo(4.45, .23)
+  lowerWindow.lineTo(4.44, .375); lowerWindow.quadraticCurveTo(4.38, .42, 4.325, .375); lowerWindow.closePath()
+  const upperWindow = new T.Path(); upperWindow.absellipse(4.405, .53, .044, .052, 0, Math.PI * 2, true)
+  sightBase.holes.push(lowerWindow, upperWindow); add(extrude(sightBase, .145, .012))
+  const front = add(new T.TorusGeometry(.105, .017, 8, 32, Math.PI * 1.65), m.metal, [4.4, .56, 0])
+  front.rotation.y = Math.PI / 2; front.rotation.z = -Math.PI * .325
+  add(new T.CylinderGeometry(.013, .018, .13, 10), m.edge, [4.4, .58, 0])
 
   makePart('core', [-.9, .12, 0], [0, 0, 0], true)
   add(loft([{ x: -1.75, y: .1, h: .13, w: .12 }, { x: -.6, y: .1, h: .18, w: .2 }, { x: -.18, y: .1, h: .1, w: .1 }], 24, 4, 1), m.diagram)
