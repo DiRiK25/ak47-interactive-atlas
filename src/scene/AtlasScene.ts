@@ -99,6 +99,7 @@ export class AtlasScene {
       const el = document.createElement('button'); el.className = 'scene-marker'; el.type = 'button'
       el.textContent = `${partById[p.id].number}  ${partById[p.id].name}`
       el.setAttribute('aria-label', `Выбрать: ${partById[p.id].name}`)
+      el.dataset.number = partById[p.id].number; el.title = partById[p.id].name
       el.addEventListener('click', () => this.callbacks.onSelect(p.id))
       el.hidden = true; markerLayer.append(el); this.markers.push({ element: el, id: p.id })
     }

@@ -29,13 +29,19 @@
 
 Самый короткий путь через **Vercel**:
 
-1. Примите ветку с реализацией в `main` через предложение изменений GitHub: **Create pull request → Merge pull request → Confirm merge**. Если интерфейс показывает кнопку **Create PR**, она ведёт к тому же процессу.
+1. Откройте [предложение изменений из ветки реализации](https://github.com/DiRiK25/ak47-interactive-atlas/pull/new/codex/ak47-museum-atlas) и примите её в `main`: **Create pull request → Merge pull request → Confirm merge**. Если интерфейс показывает кнопку **Create PR**, она ведёт к тому же процессу.
 2. На телефоне откройте [vercel.com/new](https://vercel.com/new), войдите через GitHub, выберите **Import Git Repository → DiRiK25/ak47-interactive-atlas → Import**. При необходимости разрешите Vercel доступ только к этому репозиторию.
 3. Vercel распознает Vite. Проверьте **Build Command: `npm run build`**, **Output Directory: `dist`**, затем нажмите **Deploy**. Переменные и ключи не нужны. После успешного развёртывания **Visit** откроет HTTPS-сайт.
 
 Не требуется компьютер или терминал. Авторизация во внешнем аккаунте выполняется владельцем аккаунта; приложение не хранит её данные.
 
-Альтернатива — **GitHub Pages** после принятия изменений в `main`:
+Для **GitHub Pages без отдельного аккаунта хостинга** подготовлена ветка `codex/static-site`, содержащая уже собранный сайт. Если Pages доступен для вашего репозитория:
+
+1. Откройте **Settings → Pages**.
+2. Выберите **Source: Deploy from a branch**, **Branch: codex/static-site**, папку **/ (root)** и нажмите **Save**.
+3. Дождитесь завершения публикации и нажмите **Visit site** на той же странице. Это действие публикует сайт; ветка с исходниками остаётся отдельной.
+
+Ветка `codex/static-site` — снимок проверенной сборки. При последующих изменениях её нужно обновлять новой сборкой. Для автоматизированных будущих публикаций также есть workflow **GitHub Pages** после принятия исходников в `main`:
 
 1. В репозитории: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 2. **Actions → Опубликовать на GitHub Pages → Run workflow → main → Run workflow**.

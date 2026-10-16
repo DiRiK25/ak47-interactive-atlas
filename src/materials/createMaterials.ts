@@ -46,7 +46,7 @@ export function createMaterials() {
   const woodMat = new T.MeshPhysicalMaterial({ color: '#ffffff', map: wood, roughness: 0.39, metalness: 0, bumpMap: woodBump, bumpScale: 0.006, clearcoat: 0.18, clearcoatRoughness: 0.45 })
   const redWood = woodMat.clone(); redWood.color.set('#e9c8ae')
   const gripWood = woodMat.clone(); gripWood.color.set('#d1aa85'); gripWood.roughness = 0.46
-  const diagram = new T.MeshStandardMaterial({ color: '#91b9aa', metalness: 0.24, roughness: 0.45, emissive: '#255c47', emissiveIntensity: 0.1 })
+  const diagram = new T.MeshStandardMaterial({ color: '#35775b', metalness: 0.1, roughness: 0.6, emissive: '#255c47', emissiveIntensity: 0.1 })
   const materials = { metal, edge, dark, magazine, wood: woodMat, redWood, gripWood, diagram }
   return { materials, textures: [wood, woodBump, metalNoise, roughness] }
 }
