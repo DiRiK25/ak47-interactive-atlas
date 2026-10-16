@@ -9,7 +9,7 @@ DIRECTORIES = ('src', 'public', 'docs', 'scripts', 'tests', '.github')
 FILES = (
     'README.md', 'package.json', 'package-lock.json', 'index.html', '.gitignore', '.nvmrc',
     'tsconfig.json', 'vite.config.ts', 'vitest.config.ts', 'playwright.config.ts',
-    'eslint.config.js', 'vercel.json',
+    'eslint.config.js', 'vercel.json', 'netlify.toml',
 )
 files = [ROOT / name for name in FILES if (ROOT / name).is_file()]
 for folder in DIRECTORIES:

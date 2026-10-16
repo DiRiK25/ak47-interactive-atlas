@@ -29,19 +29,21 @@ export function createMaterials() {
   }
   const field = (x: number, y: number, sx: number, sy: number) => noise(x * sx, y * sy, sx, sy)
   const grain = (x: number, y: number) => {
-    const warp = y + (field(x, y, 3, 4) - .5) * .07 + Math.sin(x * Math.PI * 2) * .012
-    const long = field(x, warp, 4, 95)
-    const fine = field(x, warp, 18, 360)
-    const pores = Math.pow(field(x, warp, 12, 210), 6)
-    return (long - .5) * .15 + (fine - .5) * .065 - pores * .18
+    const warp = y + (field(x, y, 3, 4) - .5) * .055 + Math.sin(x * Math.PI * 2) * .012
+    const long = field(x, warp, 5, 85)
+    const fine = field(x, warp, 22, 280)
+    const rings = Math.pow(.5 + .5 * Math.sin(warp * Math.PI * 2 * 38), 12)
+    const pores = Math.pow(field(x, warp, 16, 160), 5)
+    // Narrow broken fibres over a slower, wavy growth pattern; no photo texture.
+    return (long - .5) * .17 + (fine - .5) * .08 - rings * (.028 + field(x, y, 8, 11) * .05) - pores * .13
   }
   const wood = texture(1024, 512, (x, y) => {
     const cloud = field(x, y, 3, 5), aged = field(x, y, 17, 21) - .5
-    const amber = Math.pow(field(x, y, 7, 10), 3)
-    const tone = .62 + cloud * .75 + grain(x, y) + aged * .24
-    return [(70 + amber * 55) * tone, (24 + amber * 27) * tone, (16 + amber * 10) * tone]
+    const amber = Math.pow(field(x, y, 5, 7), 2)
+    const tone = .72 + cloud * .5 + grain(x, y) * 1.25 + aged * .12
+    return [(80 + amber * 46) * tone, (27 + amber * 30) * tone, (16 + amber * 12) * tone]
   }); wood.colorSpace = T.SRGBColorSpace
-  const woodBump = texture(1024, 512, (x, y) => { const v = 130 + grain(x, y) * 95; return [v, v, v] })
+  const woodBump = texture(1024, 512, (x, y) => { const v = 130 + grain(x, y) * 140; return [v, v, v] })
   const woodRoughness = texture(512, 256, (x, y) => {
     const v = 155 + field(x, y, 3, 5) * 62 + (field(x, y, 17, 21) - .5) * 35 + grain(x, y) * 70
     return [v, v, v]
@@ -55,11 +57,11 @@ export function createMaterials() {
     const v = 188 - patina(x, y) * 80 + (random() - .5) * 9
     return [v, v, v]
   })
-  const metal = new T.MeshStandardMaterial({ color: '#2e342f', metalness: .91, roughness: .56, map: metalNoise, roughnessMap: roughness, bumpMap: metalNoise, bumpScale: .0012, envMapIntensity: 1.05 })
-  const edge = new T.MeshStandardMaterial({ color: '#424a43', metalness: .88, roughness: .5, map: metalNoise, roughnessMap: roughness, envMapIntensity: 1.05 })
+  const metal = new T.MeshStandardMaterial({ color: '#3a403e', metalness: .88, roughness: .6, map: metalNoise, roughnessMap: roughness, bumpMap: metalNoise, bumpScale: .0012, envMapIntensity: 1.15 })
+  const edge = new T.MeshStandardMaterial({ color: '#545d58', metalness: .86, roughness: .55, map: metalNoise, roughnessMap: roughness, envMapIntensity: 1.1 })
   const dark = new T.MeshStandardMaterial({ color: '#141a16', metalness: 0.65, roughness: 0.56 })
-  const magazine = metal.clone(); magazine.color.set('#333a32'); magazine.roughness = .58
-  const woodMat = new T.MeshPhysicalMaterial({ color: '#ffffff', map: wood, roughness: .57, roughnessMap: woodRoughness, metalness: 0, bumpMap: woodBump, bumpScale: .004, clearcoat: .26, clearcoatRoughness: .36, clearcoatRoughnessMap: woodRoughness })
+  const magazine = metal.clone(); magazine.color.set('#414740'); magazine.roughness = .62
+  const woodMat = new T.MeshPhysicalMaterial({ color: '#ffffff', map: wood, roughness: .6, roughnessMap: woodRoughness, metalness: 0, bumpMap: woodBump, bumpScale: .004, clearcoat: .32, clearcoatRoughness: .31, clearcoatRoughnessMap: woodRoughness })
   const redWood = woodMat.clone(); redWood.color.set('#f5dfd3')
   const gripWood = woodMat.clone(); gripWood.color.set('#d4bbc0'); gripWood.roughness = .65; gripWood.clearcoat = .16
   const diagram = new T.MeshStandardMaterial({ color: '#35775b', metalness: 0.1, roughness: 0.6, emissive: '#255c47', emissiveIntensity: 0.1 })

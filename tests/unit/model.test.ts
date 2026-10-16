@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import * as T from 'three'
 import { createAtlasModel } from '../../src/geometry/createAtlasModel'
-import { extrude } from '../../src/geometry/primitives'
+import { extrude, loft } from '../../src/geometry/primitives'
 import { parts } from '../../src/data/parts'
 import { damping, pixelRatio, fitDistance } from '../../src/utils/motion'
 import type { AtlasMaterials } from '../../src/materials/createMaterials'
@@ -14,6 +14,28 @@ function model() {
   const result = createAtlasModel(materials); resources.push(result); return result
 }
 describe('Оригинальная геометрия', () => {
+  it('сохраняет гладкую поверхность объёма у UV-шва и плоские торцы', () => {
+    const geometry = loft([{ x: -1, y: 0, h: .4, w: .25 }, { x: 1, y: 0, h: .4, w: .25 }], 32, 3)
+    resources.push(geometry)
+    const position = geometry.getAttribute('position'), normal = geometry.getAttribute('normal')
+    const seamNormals = new Map<string, T.Vector3[]>()
+    let capVertices = 0
+    for (let i = 0; i < position.count; i++) {
+      const x = position.getX(i), nx = normal.getX(i)
+      if (Math.abs(nx) > .99) {
+        expect(nx).toBeCloseTo(Math.sign(x), 6)
+        expect(Math.abs(x)).toBeCloseTo(1, 6); capVertices++
+      } else {
+        expect(Math.abs(nx)).toBeLessThan(.001)
+        const key = [x, position.getY(i), position.getZ(i)].map(v => Math.round(v * 1e6)).join(',')
+        if (!seamNormals.has(key)) seamNormals.set(key, [])
+        seamNormals.get(key)!.push(new T.Vector3().fromBufferAttribute(normal, i))
+      }
+    }
+    const seams = [...seamNormals.values()].filter(v => v.length > 1)
+    expect(seams.length).toBeGreaterThan(0); expect(capVertices).toBeGreaterThan(0)
+    for (const [a, b] of seams) expect(a.distanceTo(b)).toBeLessThan(.00001)
+  })
   it('сохраняет плоские нормали больших граней рядом со сглаженной фаской', () => {
     const shape = new T.Shape(); shape.moveTo(-2, 0); shape.lineTo(1, 0); shape.lineTo(.8, 1); shape.lineTo(-1.9, .5); shape.closePath()
     const geometry = extrude(shape, .4, .05); resources.push(geometry)

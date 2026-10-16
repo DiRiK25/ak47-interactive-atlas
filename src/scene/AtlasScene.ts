@@ -169,7 +169,10 @@ export class AtlasScene {
     this.model.root.updateMatrixWorld(true); box.applyMatrix4(this.model.root.matrixWorld)
     const size = box.getSize(new T.Vector3())
     box.getCenter(this.targetLook)
-    const distance = Math.max(3.1, fitDistance(Math.min(size.x + 1.6, 8), size.y + 1.1, this.camera.aspect, this.camera.fov))
+    // The phone card leaves a shallow canvas: use tighter framing for the selected
+    // silhouette so its close-up remains useful even on a 360 × 640 display.
+    const compact = this.width < 700
+    const distance = Math.max(compact ? 2.8 : 3.1, fitDistance(Math.min(size.x + (compact ? .6 : 1.6), 8), size.y + (compact ? .35 : 1.1), this.camera.aspect, this.camera.fov))
     this.targetPosition = new T.Vector3(.25, .12, 1).normalize().multiplyScalar(distance).add(this.targetLook)
     this.controls.minDistance = Math.max(2, distance * .6); this.controls.maxDistance = this.baseDistance * 1.55
     if (this.state.reducedMotion) { this.camera.position.copy(this.targetPosition); this.controls.target.copy(this.targetLook); this.targetPosition = null }

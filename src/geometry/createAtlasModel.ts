@@ -37,27 +37,22 @@ export function createAtlasModel(m: AtlasMaterials): AtlasModel {
   }
 
   makePart('stock', [-4.15, -.55, 0], [-1.4, .3, .2])
-  const stock = new T.Shape(); stock.moveTo(-5.45, -.17)
-  stock.bezierCurveTo(-4.63, -.08, -3.61, .025, -2.79, .12)
-  stock.lineTo(-2.77, -.37); stock.bezierCurveTo(-3.51, -.65, -4.57, -1.07, -5.35, -1.34)
-  stock.quadraticCurveTo(-5.43, -1.37, -5.45, -1.28)
-  stock.lineTo(-5.49, -.25); stock.quadraticCurveTo(-5.49, -.18, -5.45, -.17)
-  const stockGeometry = extrude(stock, .44, .045)
-  const stockPosition = stockGeometry.getAttribute('position'), stockNormal = stockGeometry.getAttribute('normal')
-  const n = new T.Vector3()
-  for (let i = 0; i < stockPosition.count; i++) {
-    const x = stockPosition.getX(i), z = stockPosition.getZ(i), slope = -.25 / 2.75
-    const width = 1 + (x + 5.5) * slope
-    stockPosition.setZ(i, z * width)
-    n.fromBufferAttribute(stockNormal, i)
-    n.set(n.x - n.z * z * slope / width, n.y, n.z / width).normalize()
-    stockNormal.setXYZ(i, n.x, n.y, n.z)
-  }
+  // Gently crowned side surfaces catch the studio reflection as the view turns.
+  const stockGeometry = loft([
+    { x: -5.49, y: -.74, h: .55, w: .24 },
+    { x: -5.45, y: -.75, h: .575, w: .25 },
+    { x: -5.35, y: -.735, h: .575, w: .255 },
+    { x: -4.9, y: -.615, h: .505, w: .249 },
+    { x: -4.2, y: -.447, h: .415, w: .234 },
+    { x: -3.5, y: -.285, h: .327, w: .209 },
+    { x: -2.82, y: -.13, h: .247, w: .183 },
+    { x: -2.77, y: -.125, h: .245, w: .18 },
+  ], 64, 3, .4, true)
   add(woodUV(stockGeometry), m.wood)
-  add(profile([[-5.52, -.19], [-5.48, -.19], [-5.43, -1.33], [-5.48, -1.32]], .48, .015), m.dark)
+  add(loft([{ x: -5.535, y: -.74, h: .53, w: .23 }, { x: -5.51, y: -.74, h: .552, w: .243 }, { x: -5.49, y: -.74, h: .552, w: .243 }], 48, 2, .4), m.dark)
   add(profile([[-2.805, .13], [-2.755, .13], [-2.755, -.39], [-2.805, -.39]], .41, .008))
   const sling = add(new T.TorusGeometry(.075, .016, 8, 24), m.metal, [-4.45, -1.025, 0])
-  sling.rotation.x = Math.PI / 2; sling.scale.y = .65
+  sling.scale.set(1.25, .65, 1)
 
   makePart('receiver', [-1.26, -.06, 0], [0, .1, 0])
   add(profile([[-2.79, .15], [-2.55, .25], [.28, .25], [.3, -.26], [-.35, -.32], [-2.76, -.39]], .49, .018))
@@ -92,12 +87,15 @@ export function createAtlasModel(m: AtlasMaterials): AtlasModel {
   add(new T.SphereGeometry(.051, 18, 10), m.edge, [.015, .24, .455]).scale.set(1.45, .7, 1)
 
   makePart('handguard', [1.2, -.08, 0], [1.05, -.95, .2])
-  const fore = new T.Shape(); fore.moveTo(.315, .185); fore.lineTo(.85, .19); fore.lineTo(2.13, .17)
-  fore.quadraticCurveTo(2.18, .055, 2.145, -.14)
-  fore.bezierCurveTo(1.83, -.17, 1.22, -.155, .91, -.225)
-  fore.quadraticCurveTo(.73, -.27, .58, -.375)
-  fore.quadraticCurveTo(.45, -.4, .315, -.285); fore.closePath()
-  add(woodUV(extrude(fore, .45, .035), 1.1), m.redWood)
+  add(woodUV(loft([
+    { x: .315, y: -.045, h: .23, w: .225 },
+    { x: .43, y: -.085, h: .28, w: .25 },
+    { x: .58, y: -.095, h: .29, w: .265 },
+    { x: .9, y: -.025, h: .215, w: .253 },
+    { x: 1.3, y: .005, h: .185, w: .245 },
+    { x: 1.94, y: .015, h: .17, w: .232 },
+    { x: 2.14, y: .015, h: .16, w: .225 },
+  ], 48, 4, .45), 1.1), m.redWood)
   add(profile([[.29, .2], [.34, .2], [.34, -.3], [.29, -.28]], .5, .01))
   add(loft([{ x: 2.13, y: .015, h: .2, w: .265 }, { x: 2.21, y: .015, h: .2, w: .265 }], 32, 2, .4), m.metal)
   add(new T.TorusGeometry(.075, .018, 8, 24), m.metal, [2.17, -.09, -.28]).scale.y = .6
@@ -110,6 +108,9 @@ export function createAtlasModel(m: AtlasMaterials): AtlasModel {
   upper.lineTo(1.72, .205); upper.lineTo(1.31, .205); upper.lineTo(1.31, .255)
   upper.quadraticCurveTo(1.18, .285, 1.05, .255); upper.lineTo(1.05, .205); upper.closePath()
   add(woodUV(extrude(upper, .365, .022), .95), m.wood)
+  for (const z of [-.17, .17]) for (const x of [1.18, 1.845]) {
+    add(profile([[x - .155, .205], [x + .155, .205], [x + .155, .28], [x - .155, .28]], .007, .006), m.dark, [0, 0, z])
+  }
   cyl(.855, .35, .19, .07); cyl(2.16, .35, .18, .07)
   cyl(2.65, .35, .108, 1.02)
   for (const x of [2.29, 2.43, 2.57]) cyl(x, .35, .116, .045, m.edge)
@@ -157,6 +158,8 @@ export function createAtlasModel(m: AtlasMaterials): AtlasModel {
   }
 
   makePart('sights', [2.48, .59, 0], [.15, 1.7, .65])
+  // An exterior shoulder closes the artificial rectangular gap in the silhouette.
+  add(loft([{ x: -.07, y: .265, h: .075, w: .235 }, { x: .18, y: .29, h: .105, w: .22 }, { x: .34, y: .36, h: .16, w: .2 }], 32, 4, .45))
   add(profile([[.3, .2], [.855, .2], [.855, .51], [.76, .58], [.33, .58]], .34, .018))
   add(profile([[.34, .54], [.81, .54], [.79, .615], [.35, .63]], .2, .008), m.edge)
   add(profile([[.31, .57], [.37, .57], [.37, .66], [.31, .66]], .29, .008))
