@@ -20,34 +20,49 @@ export function createMaterials() {
     const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453
     return n - Math.floor(n)
   }
-  const noise = (x: number, y: number) => {
+  // Periodic lattice noise keeps the generated textures continuous across UV seams.
+  const noise = (x: number, y: number, periodX = 256, periodY = 256) => {
     const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy
     const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy)
-    return T.MathUtils.lerp(T.MathUtils.lerp(hash(ix, iy), hash(ix + 1, iy), u), T.MathUtils.lerp(hash(ix, iy + 1), hash(ix + 1, iy + 1), u), v)
+    const at = (a: number, b: number) => hash(((a % periodX) + periodX) % periodX, ((b % periodY) + periodY) % periodY)
+    return T.MathUtils.lerp(T.MathUtils.lerp(at(ix, iy), at(ix + 1, iy), u), T.MathUtils.lerp(at(ix, iy + 1), at(ix + 1, iy + 1), u), v)
   }
+  const field = (x: number, y: number, sx: number, sy: number) => noise(x * sx, y * sy, sx, sy)
   const grain = (x: number, y: number) => {
-    const warp = y + (noise(x * 3, y * 4) - .5) * .12 + Math.sin(x * 4) * .018
-    const long = noise(x * 5, warp * 100)
-    const fine = noise(x * 16, warp * 420)
-    const pores = Math.pow(noise(x * 13, warp * 260), 5)
-    return (long - .5) * .13 + (fine - .5) * .075 - pores * .12
+    const warp = y + (field(x, y, 3, 4) - .5) * .07 + Math.sin(x * Math.PI * 2) * .012
+    const long = field(x, warp, 4, 95)
+    const fine = field(x, warp, 18, 360)
+    const pores = Math.pow(field(x, warp, 12, 210), 6)
+    return (long - .5) * .15 + (fine - .5) * .065 - pores * .18
   }
   const wood = texture(1024, 512, (x, y) => {
-    const tone = .9 + grain(x, y) + (noise(x * 2, y * 7) - .5) * .24
-    return [119 * tone, 65 * tone, 33 * tone]
+    const cloud = field(x, y, 3, 7) - .5
+    const tone = .96 + grain(x, y) + cloud * .55
+    return [82 * tone, (31 + cloud * 8) * tone, (19 + cloud * 4) * tone]
   }); wood.colorSpace = T.SRGBColorSpace
-  const woodBump = texture(1024, 512, (x, y) => { const v = 130 + grain(x, y) * 120; return [v, v, v] })
-  const metalNoise = texture(512, 512, (x, y) => { const v = 200 + (random() - 0.5) * 22 + Math.sin(y * 600) * 2 + Math.sin(x * 120) * 2; return [v, v, v] })
-  const roughness = texture(256, 256, () => { const v = 170 + random() * 45; return [v, v, v] })
-  const metal = new T.MeshStandardMaterial({ color: '#434a4b', metalness: 0.86, roughness: 0.44, map: metalNoise, roughnessMap: roughness, bumpMap: metalNoise, bumpScale: 0.002, envMapIntensity: 1.05 })
-  const edge = new T.MeshStandardMaterial({ color: '#596163', metalness: 0.87, roughness: 0.4, envMapIntensity: 1.1 })
+  const woodBump = texture(1024, 512, (x, y) => { const v = 130 + grain(x, y) * 95; return [v, v, v] })
+  const woodRoughness = texture(512, 256, (x, y) => {
+    const v = 186 + (field(x, y, 3, 8) - .5) * 48 + grain(x, y) * 70
+    return [v, v, v]
+  })
+  const patina = (x: number, y: number) => (field(x, y, 7, 9) - .5) * .65 + (field(x, y, 23, 27) - .5) * .35
+  const metalNoise = texture(512, 512, (x, y) => {
+    const v = 185 + patina(x, y) * 44 + (random() - .5) * 7 + (field(x, y, 10, 230) - .5) * 5
+    return [v, v, v]
+  })
+  const roughness = texture(512, 512, (x, y) => {
+    const v = 188 - patina(x, y) * 80 + (random() - .5) * 9
+    return [v, v, v]
+  })
+  const metal = new T.MeshStandardMaterial({ color: '#353b3c', metalness: .88, roughness: .57, map: metalNoise, roughnessMap: roughness, bumpMap: metalNoise, bumpScale: .0012, envMapIntensity: 1.05 })
+  const edge = new T.MeshStandardMaterial({ color: '#41484a', metalness: .86, roughness: .48, roughnessMap: roughness, envMapIntensity: 1.05 })
   const dark = new T.MeshStandardMaterial({ color: '#171d1d', metalness: 0.65, roughness: 0.56 })
-  const magazine = metal.clone(); magazine.color.set('#343c3d'); magazine.roughness = 0.39
-  const woodMat = new T.MeshPhysicalMaterial({ color: '#ffffff', map: wood, roughness: 0.39, metalness: 0, bumpMap: woodBump, bumpScale: 0.006, clearcoat: 0.18, clearcoatRoughness: 0.45 })
-  const redWood = woodMat.clone(); redWood.color.set('#e9c8ae')
-  const gripWood = woodMat.clone(); gripWood.color.set('#d1aa85'); gripWood.roughness = 0.46
+  const magazine = metal.clone(); magazine.color.set('#303838'); magazine.roughness = .53
+  const woodMat = new T.MeshPhysicalMaterial({ color: '#ffffff', map: wood, roughness: .57, roughnessMap: woodRoughness, metalness: 0, bumpMap: woodBump, bumpScale: .004, clearcoat: .26, clearcoatRoughness: .36, clearcoatRoughnessMap: woodRoughness })
+  const redWood = woodMat.clone(); redWood.color.set('#f5dfd3')
+  const gripWood = woodMat.clone(); gripWood.color.set('#d5b7a9'); gripWood.roughness = .65; gripWood.clearcoat = .16
   const diagram = new T.MeshStandardMaterial({ color: '#35775b', metalness: 0.1, roughness: 0.6, emissive: '#255c47', emissiveIntensity: 0.1 })
   const materials = { metal, edge, dark, magazine, wood: woodMat, redWood, gripWood, diagram }
-  return { materials, textures: [wood, woodBump, metalNoise, roughness] }
+  return { materials, textures: [wood, woodBump, woodRoughness, metalNoise, roughness] }
 }
 export type AtlasMaterials = ReturnType<typeof createMaterials>['materials']

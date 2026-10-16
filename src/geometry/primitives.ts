@@ -1,4 +1,5 @@
 import * as T from 'three'
+import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js'
 
 /** Display-space coordinates only: no manufacturing dimensions or mating surfaces. */
 export function profile(points: [number, number][], depth: number, bevel = 0.025) {
@@ -10,7 +11,16 @@ export function profile(points: [number, number][], depth: number, bevel = 0.025
 export function extrude(shape: T.Shape, depth: number, bevel = 0.025) {
   const g = new T.ExtrudeGeometry(shape, { depth, bevelEnabled: bevel > 0, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 3, curveSegments: 32, steps: 1 })
   g.translate(0, 0, -depth / 2)
-  return g
+  const smoothed = toCreasedNormals(g, Math.PI / 3)
+  // Keep the broad cap planes truly flat. Averaging their normals with narrow
+  // bevel triangles otherwise creates large diagonal reflection artifacts.
+  const position = smoothed.getAttribute('position'), normal = smoothed.getAttribute('normal')
+  const cap = depth / 2 + bevel
+  for (let i = 0; i < position.count; i++) {
+    if (Math.abs(Math.abs(position.getZ(i)) - cap) < 1e-5) normal.setXYZ(i, 0, 0, Math.sign(position.getZ(i)))
+  }
+  if (smoothed !== g) g.dispose()
+  return smoothed
 }
 export interface Section { x: number; y: number; h: number; w: number }
 /** Smooth, softly squared cross sections with genuinely rounded transitions. */
@@ -63,7 +73,7 @@ export function woodUV(geometry: T.BufferGeometry, scale = 1, vertical = false) 
   const position = geometry.getAttribute('position'), uv = new Float32Array(position.count * 2)
   for (let i = 0; i < position.count; i++) {
     uv[i * 2] = ((vertical ? position.getY(i) : position.getX(i)) + 5.2) * 0.35 * scale
-    uv[i * 2 + 1] = ((vertical ? position.getX(i) : position.getY(i)) + position.getZ(i) * 0.6) * 0.65 * scale + 0.5
+    uv[i * 2 + 1] = ((vertical ? position.getX(i) - position.getY(i) * .43 : position.getY(i)) + position.getZ(i) * 0.6) * 0.65 * scale + 0.5
   }
   geometry.setAttribute('uv', new T.BufferAttribute(uv, 2)); return geometry
 }

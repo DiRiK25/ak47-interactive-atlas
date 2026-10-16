@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import * as T from 'three'
 import { createAtlasModel } from '../../src/geometry/createAtlasModel'
+import { extrude } from '../../src/geometry/primitives'
 import { parts } from '../../src/data/parts'
 import { damping, pixelRatio, fitDistance } from '../../src/utils/motion'
 import type { AtlasMaterials } from '../../src/materials/createMaterials'
@@ -13,6 +14,21 @@ function model() {
   const result = createAtlasModel(materials); resources.push(result); return result
 }
 describe('Оригинальная геометрия', () => {
+  it('сохраняет плоские нормали больших граней рядом со сглаженной фаской', () => {
+    const shape = new T.Shape(); shape.moveTo(-2, 0); shape.lineTo(1, 0); shape.lineTo(.8, 1); shape.lineTo(-1.9, .5); shape.closePath()
+    const geometry = extrude(shape, .4, .05); resources.push(geometry)
+    const position = geometry.getAttribute('position'), normal = geometry.getAttribute('normal')
+    let caps = 0, curved = 0
+    for (let i = 0; i < position.count; i++) {
+      const z = position.getZ(i)
+      if (Math.abs(Math.abs(z) - .25) < 1e-5) {
+        caps++
+        expect(normal.getX(i)).toBeCloseTo(0, 6); expect(normal.getY(i)).toBeCloseTo(0, 6)
+        expect(normal.getZ(i)).toBeCloseTo(Math.sign(z), 6)
+      } else if (Math.abs(normal.getZ(i)) > .05 && Math.abs(normal.getZ(i)) < .95) curved++
+    }
+    expect(caps).toBeGreaterThan(0); expect(curved).toBeGreaterThan(0)
+  })
   it('создаёт все документированные группы с геометрией для выбора', () => {
     const atlas = model()
     expect([...atlas.parts.keys()].sort()).toEqual(parts.map(p => p.id).sort())
